@@ -1,15 +1,13 @@
 
-import chromadb
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 from langchain import HuggingFaceHub, LLMChain
 from langchain.prompts import PromptTemplate
+from qdrant_client import QdrantClient
+from qdrant_client.models import PointStruct
 
-# Initialize ChromaDB client
-client = chromadb.Client()
-
-# Create a collection for code snippets
-collection = client.create_collection("code_snippets")
+# Initialize Qdrant client
+client = QdrantClient("http://localhost:6333")
 
 # Load embedding model
 embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -20,13 +18,11 @@ code_snippets = [
     "def subtract(a, b): return a - b",
 ]
 
-# Generate embeddings and store in ChromaDB
+# Generate embeddings and store in Qdrant
 embeddings = embedder.encode(code_snippets)
-collection.add(
-    documents=code_snippets,
-    embeddings=embeddings,
-    ids=["snippet1", "snippet2"]
-)
+client.create_collection(collection_name="code_snippets", vector_size=384)
+points = [PointStruct(id=i, vector=emb, payload={"code": code_snippets[i]}) for i, emb in enumerate(embeddings)]
+client.upsert(collection_name="code_snippets", points=points)
 
 # Load the LLM (Mistral-Nemo-Instruct-2407)
 llm = HuggingFaceHub(repo_id="mistralai/Mistral-Nemo-Instruct-2407", model_kwargs={"temperature": 0.5})
@@ -41,11 +37,11 @@ prompt = PromptTemplate(template=template, input_variables=["query"])
 # Create the LLM chain
 llm_chain = LLMChain(llm=llm, prompt=prompt)
 
-# Function to retrieve code snippets using ChromaDB
+# Function to retrieve code snippets using Qdrant
 def retrieve_code_snippets(query):
     query_embedding = embedder.encode([query])[0]
-    results = collection.query(query_embeddings=[query_embedding], n_results=3)
-    return results["documents"]
+    results = client.search(collection_name="code_snippets", query_vector=query_embedding, limit=3)
+    return [hit.payload["code"] for hit in results]
 
 # Function to generate assistant response
 def generate_code_assistant_response(query):
