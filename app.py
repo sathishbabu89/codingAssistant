@@ -1,10 +1,10 @@
-
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 from langchain import HuggingFaceHub, LLMChain
 from langchain.prompts import PromptTemplate
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
+from qdrant_client.http.models import VectorParams
 
 # Initialize Qdrant client
 client = QdrantClient("http://localhost:6333")
@@ -20,7 +20,14 @@ code_snippets = [
 
 # Generate embeddings and store in Qdrant
 embeddings = embedder.encode(code_snippets)
-client.create_collection(collection_name="code_snippets", vector_size=384)
+
+# Create collection with vector configuration (Cosine similarity for float vectors)
+client.create_collection(
+    collection_name="code_snippets", 
+    vectors_config=VectorParams(size=384, distance="Cosine")
+)
+
+# Insert the points into Qdrant
 points = [PointStruct(id=i, vector=emb, payload={"code": code_snippets[i]}) for i, emb in enumerate(embeddings)]
 client.upsert(collection_name="code_snippets", points=points)
 
