@@ -1,5 +1,4 @@
-
-chromadb
+qdrant-client
 streamlit
 langchain-community
 huggingface_hub
