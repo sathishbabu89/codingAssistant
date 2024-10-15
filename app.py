@@ -6,6 +6,9 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from qdrant_client.http.models import VectorParams
 
+# Set your Hugging Face API token here
+HUGGINGFACE_API_TOKEN = "your_token_here"  # Replace with your actual token
+
 # Initialize Qdrant client
 client = QdrantClient("http://localhost:6333")
 
@@ -31,8 +34,12 @@ client.create_collection(
 points = [PointStruct(id=i, vector=emb, payload={"code": code_snippets[i]}) for i, emb in enumerate(embeddings)]
 client.upsert(collection_name="code_snippets", points=points)
 
-# Load the LLM (Mistral-Nemo-Instruct-2407)
-llm = HuggingFaceHub(repo_id="mistralai/Mistral-Nemo-Instruct-2407", model_kwargs={"temperature": 0.5})
+# Load the LLM (Mistral-Nemo-Instruct-2407) with API token
+llm = HuggingFaceHub(
+    repo_id="mistralai/Mistral-Nemo-Instruct-2407", 
+    model_kwargs={"temperature": 0.5},
+    huggingfacehub_api_token=HUGGINGFACE_API_TOKEN  # Pass the token directly
+)
 
 # Define the prompt template
 template = '''
