@@ -1,0 +1,7 @@
+
+chromadb
+streamlit
+langchain-community
+huggingface_hub
+sentence-transformers
+transformers
