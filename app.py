@@ -5,6 +5,7 @@ from langchain.prompts import PromptTemplate
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from qdrant_client.http.models import VectorParams
+from qdrant_client.http.models import CollectionInfo
 
 # Set your Hugging Face API token here
 HUGGINGFACE_API_TOKEN = "your_token_here"  # Replace with your actual token
@@ -24,11 +25,19 @@ code_snippets = [
 # Generate embeddings and store in Qdrant
 embeddings = embedder.encode(code_snippets)
 
-# Create collection with vector configuration (Cosine similarity for float vectors)
-client.create_collection(
-    collection_name="code_snippets", 
-    vectors_config=VectorParams(size=384, distance="Cosine")
-)
+# Check if the collection already exists
+try:
+    client.get_collection("code_snippets")
+    collection_exists = True
+except Exception:
+    collection_exists = False
+
+# Create collection with vector configuration (Cosine similarity for float vectors) if it doesn't exist
+if not collection_exists:
+    client.create_collection(
+        collection_name="code_snippets", 
+        vectors_config=VectorParams(size=384, distance="Cosine")
+    )
 
 # Insert the points into Qdrant
 points = [PointStruct(id=i, vector=emb, payload={"code": code_snippets[i]}) for i, emb in enumerate(embeddings)]
