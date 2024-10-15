@@ -5,7 +5,6 @@ from langchain.prompts import PromptTemplate
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from qdrant_client.http.models import VectorParams
-from qdrant_client.http.models import CollectionInfo
 
 # Set your Hugging Face API token here
 HUGGINGFACE_API_TOKEN = "your_token_here"  # Replace with your actual token
@@ -50,10 +49,12 @@ llm = HuggingFaceHub(
     huggingfacehub_api_token=HUGGINGFACE_API_TOKEN  # Pass the token directly
 )
 
-# Define the prompt template
+# Define the prompt template with enhanced instructions
 template = '''
-You are a coding assistant. Help with the following code-related query:
+You are a coding assistant. Given the following question, provide a detailed explanation:
 {query}
+
+If relevant code is necessary, include it at the end of your response.
 '''
 prompt = PromptTemplate(template=template, input_variables=["query"])
 
@@ -69,6 +70,7 @@ def retrieve_code_snippets(query):
 # Function to generate assistant response
 def generate_code_assistant_response(query):
     retrieved_snippets = retrieve_code_snippets(query)
+    # Generate response with LLM
     response = llm_chain.run(query=query)
     return response, retrieved_snippets
 
@@ -83,6 +85,8 @@ if query:
     st.subheader("LLM Response:")
     st.write(response)
     
-    st.subheader("Retrieved Code Snippets:")
-    for snippet in retrieved_snippets:
-        st.code(snippet)
+    # Display retrieved code snippets only if they are relevant
+    if retrieved_snippets:
+        st.subheader("Retrieved Code Snippets:")
+        for snippet in retrieved_snippets:
+            st.code(snippet)
