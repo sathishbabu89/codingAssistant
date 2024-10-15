@@ -19,5 +19,8 @@ After activating your virtual environment with .\my_env\Scripts\activate, you ca
 
 pip install -r requirements.txt
 
+docker run -d -p 6333:6333 qdrant/qdrant
+
+
 After the dependencies are installed, you can run your app.py file using Streamlit with this
 streamlit run app.py
